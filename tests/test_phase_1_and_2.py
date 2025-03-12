@@ -31,26 +31,33 @@ class TestPhase1And2(unittest.TestCase):
         await self.playwright.stop()
 
     async def test_browser_automation(self):
+    try:
         logging.info("Navigating to http://example.com")
         await self.page.goto('http://example.com')
         logging.info("Clicking selector")
-        await self.page.wait_for_selector('selector')
-await self.page.click('selector')
-        logging.info("Filling selector with text")
-        await self.page.fill('selector', 'text')
+        await self.page.wait_for_selector('actual-selector')
+await self.page.click('actual-selector')
+await self.page.fill('actual-selector', 'text')
+data = await self.page.inner_text('actual-selector')
+self.assertIn('text', data)
+    except Exception as e:
+        logging.error(f"Error in test_browser_automation: {e}")
+        raise
+
+        await self.page.fill('actual-selector', 'text')
         logging.info("Extracting data from selector")
-        data = await self.page.inner_text('selector')
+        data = await self.page.inner_text('actual-selector')
         self.assertIn('text', data)
 
     def test_data_processing(self):
         logging.info("Testing data processing")
-        csv_data = self.data_processing.parse_csv('/path/to/csvfile.csv')
+        csv_data = self.data_processing.parse_csv(os.getenv('CSV_FILE_PATH', '/path/to/csvfile.csv'))
         self.assertIsNotNone(csv_data)
 
-        excel_data = self.data_processing.parse_excel('/path/to/excelfile.xlsx')
+        excel_data = self.data_processing.parse_excel(os.getenv('EXCEL_FILE_PATH', '/path/to/excelfile.xlsx'))
         self.assertIsNotNone(excel_data)
 
-        pdf_text = self.data_processing.extract_pdf_text('/path/to/pdffile.pdf')
+        pdf_text = self.data_processing.extract_pdf_text(os.getenv('PDF_FILE_PATH', '/path/to/pdffile.pdf'))
         self.assertIsNotNone(pdf_text)
 
         nlp_result = self.data_processing.basic_nlp('This is a sample text.')
