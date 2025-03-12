@@ -5,6 +5,10 @@ FROM python:3.11-slim
 ENV RUNTIME_API_HOST=http://localhost
 ENV CHROME_INSTANCE_PATH=/usr/bin/chromium
 
+# Install additional packages for security and sandboxing
+RUN apt-get update && apt-get install -y \
+    libcap2-bin \
+    && rm -rf /var/lib/apt/lists/*
 # Install Chromium for browser automation and clean up APT caches
 RUN apt-get update && \
     apt-get install -y chromium bash sudo && \
