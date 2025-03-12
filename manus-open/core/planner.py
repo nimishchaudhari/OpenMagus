@@ -1,19 +1,22 @@
 class PlannerAgent:
-    def __init__(self):
-        pass
+    def __init__(self, knowledge_agent, executor_agent, procedural_memory):
+        self.knowledge_agent = knowledge_agent
+        self.executor_agent = executor_agent
+        self.procedural_memory = procedural_memory
 
-    def analyze_request(self, request):
-        # Implement request analysis logic here
-        pass
+    def handle_task(self, task, session_id):
+        # Query knowledge agent for relevant information
+        knowledge = self.knowledge_agent.query_knowledge(task)
 
-    def create_dag(self, subtasks):
-        # Implement DAG creation logic here
-        pass
+        # Plan the task based on the knowledge
+        plan = self.plan_task(task, knowledge)
 
-    def prioritize_tasks(self, tasks):
-        # Implement task prioritization logic here
-        pass
+        # Store the plan in procedural memory
+        self.procedural_memory.store_plan(session_id, plan)
 
-    def adapt_plan(self, feedback):
-        # Implement plan adaptation logic here
+        # Execute the plan
+        self.executor_agent.execute_plan(plan, session_id)
+
+    def plan_task(self, task, knowledge):
+        # Implement task planning logic here
         pass

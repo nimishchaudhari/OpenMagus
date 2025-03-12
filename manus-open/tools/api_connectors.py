@@ -1,7 +1,7 @@
 import requests
 
 class APIConnectors:
-    def connect(self, endpoint, method='GET', data=None):
+    def execute(self, params):
         # Implement API connection logic here
-        response = requests.request(method, endpoint, json=data)
+        response = requests.request(params['method'], params['endpoint'], json=params.get('data'))
         return response.json()
