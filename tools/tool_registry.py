@@ -1,16 +1,9 @@
-from flask import Flask, request, jsonify
+class ToolRegistry:
+    def __init__(self):
+        self.tools = {}
 
-app = Flask(__name__)
+    def register_tool(self, tool_name, tool_function):
+        self.tools[tool_name] = tool_function
 
-@app.route('/register', methods=['POST'])
-def register_tool():
-    data = request.json
-    # Implement the logic to register a tool
-    response = {
-        "status": "success",
-        "message": "Tool registered"
-    }
-    return jsonify(response)
-
-if __name__ == '__main__':
-    app.run(port=5004)
+    def get_tool(self, tool_name):
+        return self.tools.get(tool_name, None)

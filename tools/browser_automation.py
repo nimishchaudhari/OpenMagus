@@ -1,16 +1,4 @@
-from flask import Flask, request, jsonify
-
-app = Flask(__name__)
-
-@app.route('/automate', methods=['POST'])
-def automate_browser():
-    data = request.json
-    # Implement the logic to automate browser actions
-    response = {
-        "status": "success",
-        "message": "Browser automated"
-    }
-    return jsonify(response)
-
-if __name__ == '__main__':
-    app.run(port=5005)
+class BrowserAutomation:
+    def automate_browser(self, task):
+        # Implement the logic to automate browser tasks
+        return {"status": "success", "message": "Browser task automated"}

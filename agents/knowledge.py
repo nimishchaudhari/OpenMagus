@@ -1,16 +1,8 @@
-from flask import Flask, request, jsonify
-
-app = Flask(__name__)
-
-@app.route('/query', methods=['POST'])
-def query_knowledge():
-    data = request.json
-    # Implement the logic to query knowledge
-    response = {
-        "status": "success",
-        "message": "Knowledge queried by Knowledge Agent"
-    }
-    return jsonify(response)
-
-if __name__ == '__main__':
-    app.run(port=5002)
+class KnowledgeAgent:
+    def retrieve_knowledge(self, plan):
+        # Implement the logic to retrieve knowledge based on the plan
+        knowledge = {
+            "info": plan.get("task", "example_knowledge"),
+            "details": ["detail1", "detail2", "detail3"]
+        }
+        return knowledge

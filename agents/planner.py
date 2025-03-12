@@ -1,16 +1,8 @@
-from flask import Flask, request, jsonify
-
-app = Flask(__name__)
-
-@app.route('/plan', methods=['POST'])
-def plan_task():
-    data = request.json
-    # Implement the logic to plan the task
-    response = {
-        "status": "success",
-        "message": "Task planned by Planner Agent"
-    }
-    return jsonify(response)
-
-if __name__ == '__main__':
-    app.run(port=5001)
+class PlannerAgent:
+    def create_plan(self, request):
+        # Implement the logic to create a plan based on the request
+        plan = {
+            "task": request.get("task", "example_task"),
+            "steps": request.get("steps", ["step1", "step2", "step3"])
+        }
+        return plan
