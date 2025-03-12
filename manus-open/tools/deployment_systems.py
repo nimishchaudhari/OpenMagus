@@ -1,4 +1,7 @@
+import subprocess
+
 class DeploymentSystems:
-    def deploy(self, system):
+    def deploy(self, command):
         # Implement deployment logic here
-        pass
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        return result.stdout
