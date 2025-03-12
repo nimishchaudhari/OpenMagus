@@ -32,3 +32,8 @@ EXPOSE 8330
 
 # Use the virtual environment's Python to run the start_server.py script
 CMD ["./venv/bin/python", "start_server.py"]
+
+# Add content sanitization for user inputs
+RUN ./venv/bin/pip install bleach
+
+
