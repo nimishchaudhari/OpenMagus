@@ -2,15 +2,15 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-@app.route('/register', methods=['POST'])
-def register_tool():
+@app.route('/execute', methods=['POST'])
+def execute_task():
     data = request.json
-    # Implement the logic to register a tool
+    # Implement the logic to execute the task
     response = {
         "status": "success",
-        "message": "Tool registered"
+        "message": "Task executed by Executor Agent"
     }
     return jsonify(response)
 
 if __name__ == '__main__':
-    app.run(port=5004)
+    app.run(port=5003)

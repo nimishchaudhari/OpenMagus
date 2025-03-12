@@ -2,15 +2,15 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-@app.route('/register', methods=['POST'])
-def register_tool():
+@app.route('/query', methods=['POST'])
+def query_knowledge():
     data = request.json
-    # Implement the logic to register a tool
+    # Implement the logic to query knowledge
     response = {
         "status": "success",
-        "message": "Tool registered"
+        "message": "Knowledge queried by Knowledge Agent"
     }
     return jsonify(response)
 
 if __name__ == '__main__':
-    app.run(port=5004)
+    app.run(port=5002)
