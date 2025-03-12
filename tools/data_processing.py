@@ -1,9 +1,42 @@
-class DataProcessing:
-    def process_data(self, data):
-        # Implement the logic to process data
-        return {"status": "success", "message": "Data processed"}
-    def __init__(self):
-        pass
+import pandas as pd
+import PyPDF2
+import fitz  # PyMuPDF
+import spacy
+import nltk
+import matplotlib.pyplot as plt
 
-    def process_data(self, data):
-        pass
+class DataProcessing:
+    def __init__(self):
+        nltk.download('punkt')
+        self.nlp = spacy.load('en_core_web_sm')
+
+    def parse_csv(self, file_path):
+        return pd.read_csv(file_path)
+
+    def parse_excel(self, file_path):
+        return pd.read_excel(file_path)
+
+    def extract_pdf_text(self, file_path):
+        with open(file_path, 'rb') as file:
+            reader = PyPDF2.PdfFileReader(file)
+            text = ''
+            for page_num in range(reader.numPages):
+                text += reader.getPage(page_num).extract_text()
+        return text
+
+    def extract_pdf_text_pymupdf(self, file_path):
+        doc = fitz.open(file_path)
+        text = ""
+        for page_num in range(len(doc)):
+            text += doc.load_page(page_num).get_text()
+        return text
+
+    def basic_nlp(self, text):
+        doc = self.nlp(text)
+        return [(token.text, token.pos_) for token in doc]
+
+    def visualize_data(self, data, title='Data Visualization'):
+        plt.figure(figsize=(10, 5))
+        plt.plot(data)
+        plt.title(title)
+        plt.show()

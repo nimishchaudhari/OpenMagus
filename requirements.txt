@@ -1,1 +1,10 @@
 flask
+pandas
+PyPDF2
+pdf2text
+spaCy
+NLTK
+matplotlib
+requests
+PyGithub
+google-api-python-client
