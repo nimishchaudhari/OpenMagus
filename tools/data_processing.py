@@ -1,6 +1,6 @@
 import pandas as pd
 import PyPDF2
-import pdf2text
+import fitz  # PyMuPDF
 import spacy
 import nltk
 import matplotlib.pyplot as plt
@@ -22,6 +22,13 @@ class DataProcessing:
             text = ''
             for page_num in range(reader.numPages):
                 text += reader.getPage(page_num).extract_text()
+        return text
+
+    def extract_pdf_text_pymupdf(self, file_path):
+        doc = fitz.open(file_path)
+        text = ""
+        for page_num in range(len(doc)):
+            text += doc.load_page(page_num).get_text()
         return text
 
     def basic_nlp(self, text):

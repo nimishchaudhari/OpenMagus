@@ -15,7 +15,8 @@ class APIConnectors:
 
     def google_connector(self, api_name, api_version, developer_key):
         return build(api_name, api_version, developerKey=developer_key)
-def infer_schema(self, url, method='GET', headers=None, params=None, data=None):
+
+    def infer_schema(self, url, method='GET', headers=None, params=None, data=None):
         response = requests.request(method, url, headers=headers, params=params, data=data)
         schema = {
             'url': url,
