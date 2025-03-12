@@ -4,6 +4,7 @@ from memory import EpisodicMemory, SemanticMemory, ProceduralMemory
 from router import ModelRouter
 from models import LiteLLM
 from config import LLM_API_KEY, LLM_MODEL
+import argparse
 
 def main():
     # Initialize agents
@@ -30,11 +31,13 @@ def main():
     # Initialize LiteLLM with configuration
     lite_llm = LiteLLM(api_key=LLM_API_KEY, model=LLM_MODEL)
 
-    # Main loop
-    while True:
-        request = input("Enter a request: ")
-        coordinator.receive_request(request)
-        # Add more logic here
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="OpenManus Multi-Agent Framework")
+    parser.add_argument("request", type=str, help="User request")
+    args = parser.parse_args()
+
+    # Handle user request
+    coordinator.receive_request(args.request)
 
 if __name__ == "__main__":
     main()
