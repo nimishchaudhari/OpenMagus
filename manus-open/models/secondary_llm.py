@@ -1,4 +1,6 @@
 class SecondaryLLM:
-    def execute(self, task):
-        # Simple secondary LLM execution logic: return the task as the result
-        return task
+    def __init__(self):
+        pass
+
+    def execute_task(self, task):
+        pass

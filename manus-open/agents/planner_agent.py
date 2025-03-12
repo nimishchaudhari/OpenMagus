@@ -1,4 +1,4 @@
-class PrimaryLLM:
+class PlannerAgent:
     def __init__(self):
         pass
 

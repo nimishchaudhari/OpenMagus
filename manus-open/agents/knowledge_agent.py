@@ -1,4 +1,4 @@
-class SemanticMemory:
+class KnowledgeAgent:
     def __init__(self):
         pass
 

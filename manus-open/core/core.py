@@ -1,6 +1,6 @@
-class PrimaryLLM:
+class Core:
     def __init__(self):
         pass
 
-    def plan_task(self, task):
+    def initialize(self):
         pass
