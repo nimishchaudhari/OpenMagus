@@ -24,6 +24,7 @@ ldconfig
 
 # Install Python dependencies
 pip install -r requirements.txt
+pip install --upgrade chromadb
 
 # Set up test data directories
 mkdir -p /tmp/chromadb

@@ -53,8 +53,8 @@ class ModelRouter:
             provider = ""
             model_name = model_env
         else:
+            # Extract provider (first part) and model (everything after the first slash)
             provider = parts[0]
-            # For model_name, use the full string for litellm
             model_name = model_env
 
         return ModelConfig(
