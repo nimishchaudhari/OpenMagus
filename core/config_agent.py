@@ -8,15 +8,22 @@ class ConfigAgent:
             "config": ["load_config"]
         }
 
-    def load_config(self, agent_name):
-        if agent_name not in self.capabilities:
+    def load_config(self, agent_name=None):
+        """
+        Load configuration for an agent or general configuration if no agent specified
+        """
+        if agent_name is not None and agent_name not in self.capabilities:
             raise ValueError(f"Unknown agent: {agent_name}")
 
-        return {
+        config = {
             "database_url": "sqlite:///example.db",
-            "capabilities": self.capabilities[agent_name],
-            # Add other configuration settings here
+            # Add other general configuration settings here
         }
+
+        if agent_name:
+            config["capabilities"] = self.capabilities[agent_name]
+
+        return config
 
     def validate_capability(self, agent_name, capability):
         if capability not in self.capabilities.get(agent_name, []):

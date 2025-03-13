@@ -26,11 +26,8 @@ class SemanticMemory:
                  collection_name: str = "knowledge_base"):
         """Initialize ChromaDB client and collection"""
         try:
-            # Initialize ChromaDB with persistence
-            self.client = chromadb.Client(Settings(
-                persist_directory=persist_directory,
-                chroma_db_impl="duckdb+parquet",
-            ))
+            # Initialize ChromaDB with persistence using the new API
+            self.client = chromadb.PersistentClient(path=persist_directory)
             
             # Get or create collection
             self.collection = self.client.get_or_create_collection(
