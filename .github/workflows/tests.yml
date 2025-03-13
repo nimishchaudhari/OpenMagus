@@ -7,20 +7,72 @@ on:
     branches: [ main ]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install linting tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install black flake8 isort mypy
+
+      - name: Run black
+        run: black --check .
+
+      - name: Run flake8
+        run: flake8 .
+
+      - name: Run isort
+        run: isort --check-only .
+
+      - name: Run mypy
+        run: mypy .
+
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
     
     services:
       redis:
         image: redis
         ports:
           - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+        env:
+          REDIS_PASSWORD: password
       neo4j:
         image: neo4j:4.4
         env:
           NEO4J_AUTH: neo4j/password
+          NEO4J_dbms_memory_pagecache_size: 512M
+          NEO4J_dbms_memory_heap_max__size: 1G
         ports:
           - 7687:7687
+        options: --health-cmd "cypher-shell -u neo4j -p password 'RETURN 1'" --health-interval 10s --health-timeout 5s --health-retries 5
           
     steps:
       - uses: actions/checkout@v3
@@ -59,6 +111,7 @@ jobs:
             --cov=./ \
             --cov-report=xml \
             --cov-report=term \
+            --cov-fail-under=80 \
             -v \
             --asyncio-mode=auto
           
@@ -67,12 +120,3 @@ jobs:
         with:
           file: ./coverage.xml
           fail_ci_if_error: true
-          
-      - name: Check test coverage threshold
-        run: |
-          COVERAGE=$(coverage report | grep TOTAL | awk '{print $4}' | sed 's/%//')
-          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-            echo "Test coverage is below 80% ($COVERAGE%)"
-            exit 1
-          fi
-          echo "Test coverage is $COVERAGE%"
