@@ -30,6 +30,7 @@ class ExecutorAgent:
                 break
             self.executor.submit(self._process_task, task)
             self.task_queue.task_done()
+    logging.info(f"Task {task['id']} added to queue")
 
     def _process_task(self, task):
         retries = 3
