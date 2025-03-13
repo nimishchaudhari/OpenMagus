@@ -60,7 +60,8 @@ jobs:
             --cov-report=xml \
             --cov-report=term \
             -v \
-            --asyncio-mode=auto
+            --asyncio-mode=auto \
+            --asyncio-default-fixture-loop-scope=function
           
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3

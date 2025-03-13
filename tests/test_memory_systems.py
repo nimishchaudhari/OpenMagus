@@ -29,16 +29,16 @@ class TestEpisodicMemory:
         )
         
         # Test storage
-        stored = await memory.store_session(session)
+        stored = memory.store_session(session)
         assert stored is True
         
         # Test retrieval
-        retrieved = await memory.retrieve_session(session.session_id)
+        retrieved = memory.retrieve_session(session.session_id)
         assert retrieved is not None
         assert retrieved.session_id == session.session_id
         
         # Test time range query
-        sessions = await memory.get_sessions_by_timerange(
+        sessions = memory.get_sessions_by_timerange(
             start_time=(datetime.utcnow() - timedelta(hours=1)).isoformat(),
             end_time=datetime.utcnow().isoformat()
         )
@@ -65,11 +65,11 @@ class TestSemanticMemory:
         ]
         
         # Test batch storage
-        success = await memory.batch_store_knowledge(entries)
+        success = memory.batch_store_knowledge(entries)
         assert success is True
         
         # Test semantic search
-        results = await memory.query_knowledge(
+        results = memory.query_knowledge(
             query="What is Python?",
             n_results=1
         )
@@ -77,7 +77,7 @@ class TestSemanticMemory:
         assert "Python" in results[0]["content"]
         
         # Test metadata filtering
-        results = await memory.query_knowledge(
+        results = memory.query_knowledge(
             query="databases",
             metadata_filter={"category": "databases"}
         )
@@ -115,16 +115,16 @@ class TestProceduralMemory:
         )
         
         # Test workflow recording
-        recorded = await memory.record_workflow(workflow)
+        recorded = memory.record_workflow(workflow)
         assert recorded is True
         
         # Test workflow retrieval
-        retrieved = await memory.get_workflow(workflow.workflow_id)
+        retrieved = memory.get_workflow(workflow.workflow_id)
         assert retrieved is not None
         assert retrieved.workflow_id == workflow.workflow_id
         
         # Test pattern matching
-        similar = await memory.find_similar_workflows(
+        similar = memory.find_similar_workflows(
             pattern=["read_file", "process_content"]
         )
         assert len(similar) > 0

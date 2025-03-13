@@ -54,7 +54,8 @@ class ModelRouter:
             model_name = model_env
         else:
             provider = parts[0]
-            model_name = model_env  # Keep the full string as model_name for litellm
+            # For model_name, use the full string for litellm
+            model_name = model_env
 
         return ModelConfig(
             model_name=model_name,
