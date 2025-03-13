@@ -17,6 +17,14 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-lint-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-lint-
+
       - name: Install linting tools
         run: |
           python -m pip install --upgrade pip
@@ -40,9 +48,28 @@ jobs:
       matrix:
         python-version: ['3.10', '3.11', '3.12']
 
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+        env:
+          REDIS_PASSWORD: password
+
+      neo4j:
+        image: neo4j:4.4
+        env:
+          NEO4J_AUTH: neo4j/password
+          NEO4J_dbms_memory_pagecache_size: 512M
+          NEO4J_dbms_memory_heap_max__size: 1G
+        ports:
+          - 7687:7687
+        options: --health-cmd "cypher-shell -u neo4j -p password 'RETURN 1'" --health-interval 10s --health-timeout 5s --health-retries 5
+
     steps:
       - uses: actions/checkout@v3
-
+      
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -55,55 +82,47 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-    
-    services:
-      redis:
-        image: redis
-        ports:
-          - 6379:6379
-        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
-        env:
-          REDIS_PASSWORD: password
-      neo4j:
-        image: neo4j:4.4
-        env:
-          NEO4J_AUTH: neo4j/password
-          NEO4J_dbms_memory_pagecache_size: 512M
-          NEO4J_dbms_memory_heap_max__size: 1G
-        ports:
-          - 7687:7687
-        options: --health-cmd "cypher-shell -u neo4j -p password 'RETURN 1'" --health-interval 10s --health-timeout 5s --health-retries 5
-          
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-          
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest-asyncio pytest-cov
-          
+
       - name: Setup dependencies
         run: |
           chmod +x scripts/setup_deps.sh
           sudo ./scripts/setup_deps.sh
-          
+
       - name: Verify SQLite version
         run: |
           sqlite3 --version
-          
+
       - name: Wait for Redis to be ready
         run: |
-          until redis-cli -h localhost -p 6379 ping; do
-            echo "Waiting for Redis..."
+          for i in {1..30}; do
+            if redis-cli -h localhost -p 6379 ping; then
+              echo "Redis is ready!"
+              exit 0
+            fi
+            echo "Waiting for Redis... (attempt $i/30)"
             sleep 1
           done
-          echo "Redis is ready!"
+          echo "Redis failed to start within 30 seconds"
+          exit 1
+
+      - name: Wait for Neo4j to be ready
+        run: |
+          for i in {1..30}; do
+            if cypher-shell -u neo4j -p password -a bolt://localhost:7687 "RETURN 1"; then
+              echo "Neo4j is ready!"
+              exit 0
+            fi
+            echo "Waiting for Neo4j... (attempt $i/30)"
+            sleep 1
+          done
+          echo "Neo4j failed to start within 30 seconds"
+          exit 1
 
       - name: Run tests
         env:
@@ -122,7 +141,7 @@ jobs:
             --cov-fail-under=80 \
             -v \
             --asyncio-mode=auto
-          
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
