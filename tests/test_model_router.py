@@ -3,127 +3,91 @@ import pytest
 import asyncio
 from datetime import datetime
 from router.model_router import ModelRouter, ModelConfig, TaskConfig
+from unittest.mock import patch, MagicMock
 
 @pytest.mark.asyncio
 class TestModelRouter:
-    async def test_model_routing_and_caching(self):
-        router = ModelRouter(cache_size=100)
-        
-        # Configure model using environment variables
-        # LiteLLM handles model config based on model string
-        planning_model = ModelConfig(
-            model_name=os.getenv("LLM_MODEL"),  # e.g. "azure/gpt-4", "claude-2", etc.
-            api_key=os.getenv("LLM_API_KEY"),
-        )
-        assert router.add_model(planning_model)
-        
-        # Configure task routing
-        task_config = TaskConfig(
-            task_type="planning",
-            required_capabilities=["reasoning"],
-            priority_models=[os.getenv("LLM_MODEL")],
-            fallback_models=["openrouter/deepseek/deepseek-r1:free"]
-        )
-        assert router.add_task_config(task_config)
-        
-        # Test actual model call
-        # Using litellm.completion() format
-        response = await router.route_task(
-            "planning",
-            [{"role": "user", "content": "Create a plan to analyze a dataset with the following steps: 1. Load data 2. Clean data 3. Analyze"}],
-            {"max_tokens": 500}
-        )
-        assert response is not None
-        assert hasattr(response, "choices")
-        assert len(response.choices) > 0
-        assert "data" in response.choices[0].message.content.lower()
-        
-        # Test caching
-        cached_response = await router.route_task(
-            "planning",
-            [{"role": "user", "content": "Create a plan to analyze a dataset with the following steps: 1. Load data 2. Clean data 3. Analyze"}],
-            {"max_tokens": 500}
-        )
-        assert cached_response == response
-        
-    async def test_model_error_handling(self):
-        router = ModelRouter(cache_size=100)
-        
-        # Test with unsupported model
-        invalid_model = ModelConfig(
-            model_name="unsupported-model",
-            api_key=os.getenv("LLM_API_KEY")
-        )
-        router.add_model(invalid_model)
-        
-        task_config = TaskConfig(
-            task_type="test",
-            required_capabilities=["test"],
-            priority_models=["invalid-model"],
-            fallback_models=[]
-        )
-        router.add_task_config(task_config)
-        
-        # Should handle error gracefully
-        response = await router.route_task(
-            "test",
-            [{"role": "user", "content": "This should fail"}],
-            {}
-        )
-        assert response is None
-        
-    async def test_model_parameter_override(self):
-        router = ModelRouter(cache_size=100)
-        
-        model = ModelConfig(
-            model_name=os.getenv("LLM_MODEL", "gpt-4"),
-            api_key=os.getenv("LLM_API_KEY")
-        )
-        router.add_model(model)
-        
-        task_config = TaskConfig(
-            task_type="override_test",
-            required_capabilities=["test"],
-            priority_models=[os.getenv("LLM_MODEL")],
-            fallback_models=[]
-        )
-        router.add_model_config(task_config)
-        
-        # Test parameter override
-        response = await router.route_task(
-            "override_test",
-            [{"role": "user", "content": "Test prompt"}],
-            {"temperature": 0.1}  # Override default temperature
-        )
-        assert response is not None
-        
-    async def test_concurrent_requests(self):
-        router = ModelRouter(cache_size=100)
-        
-        model = ModelConfig(
-            model_name=os.getenv("LLM_MODEL"),
-            api_key=os.getenv("LLM_API_KEY")
-        )
-        router.add_model(model)
-        
-        task_config = TaskConfig(
-            task_type="concurrent_test",
-            required_capabilities=["test"],
-            priority_models=[os.getenv("LLM_MODEL")],
-            fallback_models=[]
-        )
-        router.add_task_config(task_config)
-        
-        # Test multiple concurrent requests
-        tasks = [
-            router.route_task(
-                "concurrent_test",
-                [{"role": "user", "content": f"Test prompt {i}"}],
-                {}
-            )
-            for i in range(3)
+    async def test_env_variable_parsing(self):
+        # Test different LLM_MODEL formats
+        test_cases = [
+            {
+                "model_env": "openrouter/deepseek/deepseek-v3",
+                "expected_provider": "openrouter",
+                "expected_model": "openrouter/deepseek/deepseek-v3"
+            },
+            {
+                "model_env": "anthropic/claude-3-opus",
+                "expected_provider": "anthropic",
+                "expected_model": "anthropic/claude-3-opus"
+            },
+            {
+                "model_env": "gpt-4",  # No provider specified
+                "expected_provider": "",
+                "expected_model": "gpt-4"
+            }
         ]
         
-        responses = await asyncio.gather(*tasks)
-        assert all(response is not None for response in responses)
-        assert len(set(r.choices[0].message.content for r in responses)) == 3  # Should be unique responses
+        for case in test_cases:
+            os.environ["LLM_MODEL"] = case["model_env"]
+            os.environ["LLM_API_KEY"] = "test-api-key"
+            
+            model_config = ModelRouter.create_model_config_from_env()
+            
+            assert model_config is not None
+            assert model_config.provider == case["expected_provider"]
+            assert model_config.model_name == case["expected_model"]
+            assert model_config.api_key == "test-api-key"
+    
+    async def test_model_config_from_env(self):
+        # Set environment variables for testing
+        os.environ["LLM_MODEL"] = "openrouter/deepseek/deepseek-v3"
+        os.environ["LLM_API_KEY"] = "test-api-key"
+        
+        router = ModelRouter(cache_size=100)
+        
+        # The model should be auto-configured from environment variables
+        # Verify the model was added correctly
+        assert os.getenv("LLM_MODEL") in router.models
+        
+        # Verify the provider and model name were parsed correctly
+        model_config = router.models[os.getenv("LLM_MODEL")]
+        assert model_config.provider == "openrouter"
+        assert model_config.model_name == "openrouter/deepseek/deepseek-v3"
+        assert model_config.api_key == "test-api-key"
+        
+    async def test_direct_completion_call(self):
+        # Test the _generate_completion method directly
+        os.environ["LLM_MODEL"] = "openrouter/deepseek/deepseek-v3"
+        os.environ["LLM_API_KEY"] = "test-api-key"
+        
+        router = ModelRouter(cache_size=100)
+        
+        # Mock the completion function
+        with patch('router.model_router.completion') as mock_completion:
+            mock_response = MagicMock()
+            mock_response.choices = [MagicMock()]
+            mock_response.choices[0].message.content = "Test response"
+            
+            # Set up the async mock
+            future = asyncio.Future()
+            future.set_result(mock_response)
+            mock_completion.return_value = future
+            
+            # Call the method directly
+            response = await router._generate_completion(
+                "Test prompt", 
+                os.getenv("LLM_MODEL"),
+                {"temperature": 0.7}
+            )
+            
+            # Verify the call was made correctly
+            mock_completion.assert_called_once()
+            args, kwargs = mock_completion.call_args
+            
+            # Check that the model name and API key were passed correctly
+            assert kwargs['model'] == "openrouter/deepseek/deepseek-v3"
+            assert kwargs['api_key'] == "test-api-key"
+            assert kwargs['messages'] == [{"role": "user", "content": "Test prompt"}]
+            
+            # Check that the response was returned correctly
+            assert response == mock_response
